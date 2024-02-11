@@ -1,13 +1,9 @@
 Write-Host "Starting installation script."
 
+$pythonVersion = &{python -V} 2>&1
+
 # Attempt to get Python version
-try {
-    $pythonVersion = Invoke-Expression "python --version 2>&1"
-    if ($pythonVersion -notmatch "Python") {
-        throw "Python not found"
-    }
-    Write-Host "Python is already installed: $pythonVersion"
-} catch {
+if ([string]::IsNullOrWhiteSpace($pythonVersion)) {
     Write-Host "Python is not installed, proceeding with installation..."
 
     # Download Python Installer
@@ -15,20 +11,23 @@ try {
     $installerPath = "$env:TEMP\python-3.10.9-amd64.exe"
     Invoke-WebRequest -Uri $installerUri -OutFile $installerPath -ErrorAction Stop
 
+    # Install Python Installer
     Write-Host "Installing Python 3.10.9..."
     Start-Process -FilePath $installerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1 TargetDir=C:\Python310-64" -Wait -ErrorAction Stop
     Write-Host "Python 3.10.9 installation completed."
+
+} else {
+    Write-Host "Python is already installed: $pythonVersion"
 }
 
-# Ensure Python is added to the current session's PATH
+# Add the python installation to the current env
 $env:Path += ";C:\Python310-64"
 
-# Execute the Python script
-$script = "installer.py"
+
+$script = "script.py"
 $executable = "C:\Python310-64\python.exe"
 
-if (Test-Path $executable) {
-    & $executable $script
-} else {
-    Write-Host "Error: Python executable not found."
-}
+# Execute the Python script
+Write-Host "Running script."
+& $executable $script
+

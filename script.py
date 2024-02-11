@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import sys
+import os
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -63,14 +64,46 @@ class Program:
             raise Exception(f"Error downloading '{self.name}': {e}")
 
     def install(self) -> None:
-        self.download()
         logging.info(f"Installing {self.name}.")
         try:
-            subprocess.run([self.installer, "/S"], check=True)
+            if self.installer.endswith(".exe"):
+                subprocess.run([self.installer, "/S"], check=True)
+            elif self.installer.endswith(".msi"):
+                subprocess.run(["msiexec", "/i", self.installer, "/qn"], check=True)
             logging.info(f"'{self.name}' installation initiated successfully.")
         except subprocess.CalledProcessError as e:
             logging.error(f"Installation of '{self.name}' failed: {e}")
             raise Exception(f"Installation of '{self.name}' failed: {e}")
 
-    def __repr__(self) -> str:
-        return f"Program(name={self.name}, url={self.url}, installer={self.installer})"
+    def clean(self) -> None:
+        logging.info(f"Cleaning {self.name} installer.")
+        os.remove(self.installer)
+
+
+def main():
+    programs = [
+        Program(
+            name="PyCharm",
+            url="https://download.jetbrains.com/python/pycharm-community-2023.1.exe",
+            installer="pycharm-community-installer.exe",
+        ),
+        Program(
+            name="BlueJ",
+            url="https://www.bluej.org/download/files/BlueJ-windows-502.msi",
+            installer="bluej_installer.msi",
+        ),
+        Program(
+            name="Wireshark",
+            url="https://2.na.dl.wireshark.org/win64/Wireshark-4.2.2-x64.exe",
+            installer="wireshark_installer.exe",
+        ),
+    ]
+
+    for program in programs:
+        program.download()
+        program.install()
+        program.clean()
+
+
+if __name__ == "__main__":
+    main()
