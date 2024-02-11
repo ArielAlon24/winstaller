@@ -37,7 +37,7 @@ def download_file(url, local_filename):
         logging.info(f"Downloaded '{local_filename}' successfully.")
     except requests.RequestException as e:
         logging.error(f"Error downloading file: {e}")
-        raise
+        raise e
 
 
 def install_pycharm(installer_path):
