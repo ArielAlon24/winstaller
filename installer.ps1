@@ -32,4 +32,3 @@ if (Test-Path $executable) {
 } else {
     Write-Host "Error: Python executable not found."
 }
-
