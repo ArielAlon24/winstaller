@@ -7,40 +7,34 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-try:
-    import requests
-except ImportError:
-    logging.info("Package 'requests' not found. Installing...")
+
+def install_module(name: str) -> None:
     try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "requests"], check=True)
-        logging.info("Requests was installed successfully.")
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to install package 'requests': {e}")
-        sys.exit(1)
+        __import__(name=name)
+    except ImportError:
+        logging.info(f"Package '{name}' was not found. Installing...")
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", name], check=True)
+            logging.info(f"Module {name} was installed successfully.")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to install module '{name}': {e}")
+            raise e
 
-    import requests
 
-try:
-    from tqdm import tqdm
-except ImportError:
-    logging.info("Package 'tqdm' not found. Installing...")
-    try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "tqdm"], check=True)
-        logging.info("'tqdm' was installed successfully.")
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to install package 'tqdm': {e}")
-        sys.exit(1)
+install_module("requests")
+import requests
 
-    from tqdm import tqdm
+install_module("tqdm")
+from tqdm import tqdm
 
 
 class Program:
     CHUNK_SIZE = 8192
 
-    def __init__(self, name: str, url: str, installer: str) -> None:
+    def __init__(self, name: str, url: str) -> None:
         self.name = name
         self.url = url
-        self.installer = installer
+        self.installer = url.split("/")[-1]
 
     def download(self) -> None:
         logging.info(f"Downloading {self.name}.")
@@ -85,17 +79,14 @@ def main():
         Program(
             name="PyCharm",
             url="https://download.jetbrains.com/python/pycharm-community-2023.1.exe",
-            installer="pycharm-community-installer.exe",
         ),
         Program(
             name="BlueJ",
             url="https://www.bluej.org/download/files/BlueJ-windows-502.msi",
-            installer="bluej_installer.msi",
         ),
         Program(
             name="Wireshark",
             url="https://2.na.dl.wireshark.org/win64/Wireshark-4.2.2-x64.exe",
-            installer="wireshark_installer.exe",
         ),
     ]
 
@@ -103,6 +94,22 @@ def main():
         program.download()
         program.install()
         program.clean()
+
+    modules = [
+        "Pillow",
+        "--pre scapy[basic]",
+        "pywin32",
+        "psutil",
+        "winregistry",
+        "wxpython",
+        "pygame",
+        "matplotlib",
+        "pytest",
+        "pep8",
+    ]
+
+    for module in modules:
+        install_module(module)
 
 
 if __name__ == "__main__":
