@@ -14,7 +14,9 @@ def install_module(name: str) -> None:
     except ImportError:
         logging.info(f"Package '{name}' was not found. Installing...")
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", name], check=True)
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", name, "-q"], check=True
+            )
             logging.info(f"Module {name} was installed successfully.")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to install module '{name}': {e}")
@@ -97,7 +99,7 @@ def main():
 
     modules = [
         "Pillow",
-        "--pre scapy[basic]",
+        "scapy[basic]",
         "pywin32",
         "psutil",
         "winregistry",
