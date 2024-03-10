@@ -40,9 +40,18 @@ class Uninstaller:
 
     def run(self) -> None:
         logging.info(f"Uninstalling '{self.name}'...")
+
+        if self.command.endswith(".exe"):
+            cmd = [self.command, "/S"]
+        elif self.command.lower().startswith("msiexec"):
+            cmd = f"{self.command} /qn".split()
+        else:
+            logging.error(f"Unsupported uninstall command format for '{self.name}'.")
+            return
+
         try:
             result = subprocess.run(
-                self.command,
+                cmd,
                 shell=True,
                 check=True,
                 text=True,
@@ -54,7 +63,7 @@ class Uninstaller:
             )
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to uninstall '{self.name}'. Error: {e}\n{e.stderr}")
-            raise
+            raise e
 
 
 def load_uninstallers() -> List[Uninstaller]:
