@@ -58,13 +58,14 @@ class Uninstaller:
 
 
 def load_uninstallers() -> List[Uninstaller]:
-    REGISTRY_PATHS = [
+    registry_paths = [
         "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
         "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
     ]
-    programs = []
 
-    for path in REGISTRY_PATHS:
+    uninstallers = []
+
+    for path in registry_paths:
         try:
             with winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE, path, 0, winreg.KEY_READ
@@ -74,16 +75,23 @@ def load_uninstallers() -> List[Uninstaller]:
                     try:
                         subkey_name = winreg.EnumKey(key, i)
                         with winreg.OpenKey(key, subkey_name) as subkey:
-                            name, _ = winreg.QueryValueEx(subkey, "DisplayName")
-                            command, _ = winreg.QueryValueEx(subkey, "UninstallString")
-                            programs.append(Uninstaller(name=name, command=command))
+                            try:
+                                name, _ = winreg.QueryValueEx(subkey, "DisplayName")
+                                command, _ = winreg.QueryValueEx(
+                                    subkey, "UninstallString"
+                                )
+                                uninstallers.append(
+                                    Uninstaller(name=name, command=command)
+                                )
+                            except FileNotFoundError:
+                                pass
                     except OSError:
                         break
                     i += 1
         except FileNotFoundError:
             pass
 
-    return programs
+    return uninstallers
 
 
 @dataclass(slots=True)
