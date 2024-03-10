@@ -1,7 +1,10 @@
 import logging
 import subprocess
 import sys
-import os
+from dataclasses import dataclass, field
+from pathlib import Path
+import winreg
+from typing import List
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -10,17 +13,17 @@ logging.basicConfig(
 
 def install_module(name: str) -> None:
     try:
-        __import__(name=name)
+        __import__(name)
     except ImportError:
-        logging.info(f"Package '{name}' was not found. Installing...")
+        logging.info(f"Package '{name}' not found. Installing...")
         try:
             subprocess.run(
                 [sys.executable, "-m", "pip", "install", name, "-q"], check=True
             )
-            logging.info(f"Module {name} was installed successfully.")
+            logging.info(f"Module '{name}' installed successfully.")
         except subprocess.CalledProcessError as e:
-            logging.error(f"Failed to install module '{name}': {e}")
-            raise e
+            logging.error(f"Failed to install module '{name}'. Error: {e}")
+            raise
 
 
 install_module("requests")
@@ -30,16 +33,71 @@ install_module("tqdm")
 from tqdm import tqdm
 
 
-class Program:
-    CHUNK_SIZE = 8192
+@dataclass(slots=True, frozen=True)
+class Uninstaller:
+    name: str
+    command: str
 
-    def __init__(self, name: str, url: str) -> None:
-        self.name = name
-        self.url = url
-        self.installer = url.split("/")[-1]
+    def run(self) -> None:
+        logging.info(f"Uninstalling '{self.name}'...")
+        try:
+            result = subprocess.run(
+                self.command,
+                shell=True,
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            logging.info(
+                f"Uninstalled '{self.name}' successfully. Output:\n{result.stdout}"
+            )
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to uninstall '{self.name}'. Error: {e}\n{e.stderr}")
+            raise
+
+
+def load_uninstallers() -> List[Uninstaller]:
+    REGISTRY_PATHS = [
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+        "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+    ]
+    programs = []
+
+    for path in REGISTRY_PATHS:
+        try:
+            with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE, path, 0, winreg.KEY_READ
+            ) as key:
+                i = 0
+                while True:
+                    try:
+                        subkey_name = winreg.EnumKey(key, i)
+                        with winreg.OpenKey(key, subkey_name) as subkey:
+                            name, _ = winreg.QueryValueEx(subkey, "DisplayName")
+                            command, _ = winreg.QueryValueEx(subkey, "UninstallString")
+                            programs.append(Uninstaller(name=name, command=command))
+                    except OSError:
+                        break
+                    i += 1
+        except FileNotFoundError:
+            pass
+
+    return programs
+
+
+@dataclass(slots=True)
+class Program:
+    CHUNK_SIZE: int = field(default=8192, init=False, repr=False)
+    name: str
+    url: str
+    installer: Path = field(init=False)
+
+    def __post_init__(self):
+        self.installer = Path(self.url.split("/")[-1])
 
     def download(self) -> None:
-        logging.info(f"Downloading {self.name}.")
+        logging.info(f"Downloading '{self.name}'...")
         try:
             with requests.get(self.url, stream=True) as r:
                 r.raise_for_status()
@@ -53,27 +111,29 @@ class Program:
                         f.write(chunk)
                 progress_bar.close()
                 if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
-                    logging.error("ERROR, something went wrong")
+                    logging.error("Download error, file size mismatch.")
             logging.info(f"Downloaded '{self.name}' successfully.")
         except requests.RequestException as e:
-            logging.error(f"Error downloading '{self.name}': {e}")
-            raise Exception(f"Error downloading '{self.name}': {e}")
+            logging.error(f"Error downloading '{self.name}'. Error: {e}")
+            raise
 
     def install(self) -> None:
-        logging.info(f"Installing {self.name}.")
+        logging.info(f"Installing '{self.name}'...")
         try:
-            if self.installer.endswith(".exe"):
-                subprocess.run([self.installer, "/S"], check=True)
-            elif self.installer.endswith(".msi"):
-                subprocess.run(["msiexec", "/i", self.installer, "/qn"], check=True)
-            logging.info(f"'{self.name}' installation initiated successfully.")
+            if self.installer.suffix == ".exe":
+                subprocess.run([str(self.installer), "/S"], check=True)
+            elif self.installer.suffix == ".msi":
+                subprocess.run(
+                    ["msiexec", "/i", str(self.installer), "/qn"], check=True
+                )
+            logging.info(f"Installed '{self.name}' successfully.")
         except subprocess.CalledProcessError as e:
-            logging.error(f"Installation of '{self.name}' failed: {e}")
-            raise Exception(f"Installation of '{self.name}' failed: {e}")
+            logging.error(f"Installation of '{self.name}' failed. Error: {e}")
+            raise
 
     def clean(self) -> None:
-        logging.info(f"Cleaning {self.name} installer.")
-        os.remove(self.installer)
+        logging.info(f"Cleaning up installer for '{self.name}'...")
+        self.installer.unlink()
 
 
 def main():
@@ -92,7 +152,12 @@ def main():
         ),
     ]
 
+    uninstallers = load_uninstallers()
+
     for program in programs:
+        for uninstaller in uninstallers:
+            if program.name in uninstaller.name:
+                uninstaller.run()
         program.download()
         program.install()
         program.clean()
