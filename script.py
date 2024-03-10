@@ -33,10 +33,13 @@ install_module("tqdm")
 from tqdm import tqdm
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True)
 class Uninstaller:
     name: str
     command: str
+
+    def __post_init__(self) -> None:
+        self.command = self.command[1:-1]
 
     def run(self) -> None:
         logging.info(f"Uninstalling '{self.name}'...")
