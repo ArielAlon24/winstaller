@@ -39,7 +39,8 @@ class Uninstaller:
     command: str
 
     def __post_init__(self) -> None:
-        self.command = self.command[1:-1]
+        if self.command[0] == '"' and self.command[-1] == '"':
+            self.command = self.command[1:-1]
 
     def run(self) -> None:
         logging.info(f"Uninstalling '{self.name}'...")
