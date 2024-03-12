@@ -28,5 +28,5 @@ echo Downloading Python script...
 curl -L "https://raw.githubusercontent.com/ArielAlon24/winstaller/main/script.py" -o "script.py"
 
 echo Running Python script...
-python yourScript.py
+python script.py
 
