@@ -168,19 +168,28 @@ def main():
         ),
         Program(
             name="Wireshark",
-            url="https://2.na.dl.wireshark.org/win64/Wireshark-4.2.2-x64.exe",
+            url="https://2.na.dl.wireshark.org/win64/Wireshark-latest-x64.exe",
+        ),
+        Program(
+            name="Npcap",
+            url="https://npcap.com/dist/npcap-1.79.exe",
         ),
     ]
 
     uninstallers = load_uninstallers()
 
     for program in programs:
-        for uninstaller in uninstallers:
-            if program.name in uninstaller.name:
-                uninstaller.run()
-        program.download()
-        program.install()
-        program.clean()
+        try:
+            for uninstaller in uninstallers:
+                if program.name in uninstaller.name:
+                    uninstaller.run()
+            program.download()
+            program.install()
+            program.clean()
+        except KeyboardInterrupt:
+            return
+        except Exception:
+            logging.debug("An exception encountered, contiuning to the next program.")
 
     modules = [
         "Pillow",
