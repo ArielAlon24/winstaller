@@ -62,9 +62,7 @@ class Uninstaller:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            logging.info(
-                f"Uninstalled '{self.name}' successfully. Output:\n{result.stdout}"
-            )
+            logging.info(f"Uninstalled '{self.name}' successfully.")
         except subprocess.CalledProcessError as e:
             logging.error(f"Failed to uninstall '{self.name}'. Error: {e}\n{e.stderr}")
             raise e
