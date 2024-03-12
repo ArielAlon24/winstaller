@@ -4,6 +4,10 @@ A script to automatically install various software for Windows.
 
 ## Usage
 
+```ps1
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ArielAlon24/winstaller/main/winstaller.bat" -OutFile "winstaller.bat"; Start-Process "winstaller.bat"
+```
+
 1. Clone this repo or download it.
 
 2. Open PowerShell as an Administrator, this can be done by right clicking the Windows icon and the clicking on the PowerShell(Admin) option.
