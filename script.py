@@ -171,7 +171,7 @@ def main():
         ),
         Program(
             name="Npcap",
-            url="https://npcap.com/dist/npcap-1.79.exe",
+            url="https://npcap.com/dist/npcap-0.96.exe",
         ),
     ]
 

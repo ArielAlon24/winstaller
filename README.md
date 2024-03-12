@@ -1,6 +1,6 @@
 # Winstaller
 
-A script to automatically install various software for Windows.
+A script that automatically installs / updates various software for Windows and Python Libraries.
 
 ## Usage
 
@@ -20,7 +20,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ArielAlon24/winstaller
 | PyCharm Community            | https://download.jetbrains.com/python/pycharm-community-2023.1.exe |
 | BlueJ                        | https://www.bluej.org/download/files/BlueJ-windows-502.msi         |
 | WireShark                    | https://2.na.dl.wireshark.org/win64/Wireshark-latest-x64.exe       |
-| Npcap (Wireshark Dependency) | https://npcap.com/dist/npcap-1.79.exe                              |
+| Npcap (Wireshark Dependency) | https://npcap.com/dist/npcap-0.96.exe                              |
 
 ### Libraries
 
