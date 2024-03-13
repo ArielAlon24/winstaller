@@ -184,11 +184,12 @@ def main():
                     uninstaller.run()
             program.download()
             program.install()
-            program.clean()
         except KeyboardInterrupt:
             return
         except Exception:
             logging.debug("An exception encountered, contiuning to the next program.")
+        finally:
+            program.clean()
 
     modules = [
         "Pillow",
